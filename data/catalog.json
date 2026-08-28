@@ -1,0 +1,45 @@
+{
+  "merchant": {
+    "id": "merchant_luma_001",
+    "name": "Luma",
+    "currency": "INR"
+  },
+  "products": [
+    {
+      "id": "prod_001",
+      "name": "Midnight Abaya",
+      "category": "Abaya",
+      "price": 3599,
+      "quality": "Premium",
+      "delivery_days": 2,
+      "stock": 7
+    },
+    {
+      "id": "prod_002",
+      "name": "Noor Classic",
+      "category": "Abaya",
+      "price": 2899,
+      "quality": "Good",
+      "delivery_days": 1,
+      "stock": 12
+    },
+    {
+      "id": "prod_003",
+      "name": "Onyx Luxe",
+      "category": "Abaya",
+      "price": 4499,
+      "quality": "Premium",
+      "delivery_days": 2,
+      "stock": 4
+    },
+    {
+      "id": "prod_004",
+      "name": "Everyday Black",
+      "category": "Abaya",
+      "price": 2199,
+      "quality": "Good",
+      "delivery_days": 5,
+      "stock": 18
+    }
+  ]
+}
