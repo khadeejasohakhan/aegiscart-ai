@@ -41,6 +41,18 @@ def process_shopping_mission(
 
     selected_product = recommendation["selected"]
 
+    # Record rejected products
+    for rejected_product in recommendation["rejected"]:
+        add_audit_event(
+            audit_log,
+            "PRODUCT_REJECTED",
+            f"{rejected_product['product']} rejected.",
+            {
+                "product": rejected_product["product"],
+                "reasons": rejected_product["reasons"]
+            }
+        )
+
     # 4. Handle case where nothing matches
     if selected_product is None:
         return {
@@ -49,6 +61,7 @@ def process_shopping_mission(
             "recommendation": recommendation,
             "audit_log": audit_log
         }
+        
 
     # 5. Record selected product
     add_audit_event(
