@@ -1,0 +1,7 @@
+{
+  "currency": "INR",
+  "autonomous_spend_limit": 1000,
+  "approval_limit": 5000,
+  "max_upsell_percentage": 10,
+  "require_approval_for_unknown_merchant": true
+}
