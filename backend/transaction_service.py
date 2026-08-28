@@ -1,6 +1,7 @@
 from catalog_service import load_catalog
 from recommendation_engine import recommend_product
 from policy_engine import load_policy, evaluate_purchase
+from audit_service import add_audit_event
 
 
 def process_shopping_mission(
@@ -13,10 +14,24 @@ def process_shopping_mission(
     through financial policy evaluation.
     """
 
-    # 1. Load merchant catalog
+    audit_log = []
+
+    # 1. Record the incoming mission
+    add_audit_event(
+        audit_log,
+        "MISSION_RECEIVED",
+        "Shopping mission received.",
+        {
+            "max_price": max_price,
+            "max_delivery_days": max_delivery_days,
+            "preferred_quality": preferred_quality
+        }
+    )
+
+    # 2. Load merchant catalog
     catalog = load_catalog()
 
-    # 2. Find the best product
+    # 3. Find the best eligible product
     recommendation = recommend_product(
         products=catalog["products"],
         max_price=max_price,
@@ -26,23 +41,47 @@ def process_shopping_mission(
 
     selected_product = recommendation["selected"]
 
+    # 4. Handle case where nothing matches
     if selected_product is None:
         return {
             "status": "NO_MATCH",
             "message": "No product satisfies the shopping constraints.",
-            "recommendation": recommendation
+            "recommendation": recommendation,
+            "audit_log": audit_log
         }
 
-    # 3. Load the user's Purchase Constitution
+    # 5. Record selected product
+    add_audit_event(
+        audit_log,
+        "PRODUCT_SELECTED",
+        f"{selected_product['name']} selected as the best eligible product.",
+        {
+            "product": selected_product["name"],
+            "price": selected_product["price"],
+            "score": selected_product["score"]
+        }
+    )
+
+    # 6. Load Purchase Constitution
     policy = load_policy()
 
-    # 4. Check whether the selected purchase is financially allowed
+    # 7. Evaluate financial authorization
     policy_result = evaluate_purchase(
         selected_product["price"],
         policy
     )
 
-    # 5. Convert policy decision into transaction state
+    add_audit_event(
+        audit_log,
+        "POLICY_CHECK",
+        policy_result["reason"],
+        {
+            "decision": policy_result["decision"],
+            "price": selected_product["price"]
+        }
+    )
+
+    # 8. Determine transaction state
     if policy_result["decision"] == "ALLOW":
         transaction_status = "READY_FOR_PAYMENT"
 
@@ -52,12 +91,14 @@ def process_shopping_mission(
     else:
         transaction_status = "BLOCKED"
 
+    # 9. Return transaction with its audit history
     return {
         "status": transaction_status,
         "merchant": catalog["merchant"]["name"],
         "selected_product": selected_product,
         "policy_decision": policy_result,
-        "rejected_products": recommendation["rejected"]
+        "rejected_products": recommendation["rejected"],
+        "audit_log": audit_log
     }
 
 
@@ -70,7 +111,6 @@ if __name__ == "__main__":
     )
 
     print("\n--- AegisCart Transaction ---")
-
     print(f"Status: {result['status']}")
 
     if result.get("selected_product"):
@@ -88,4 +128,12 @@ if __name__ == "__main__":
         print(
             "Reason: "
             f"{result['policy_decision']['reason']}"
+        )
+
+    print("\n--- Audit Trail ---")
+
+    for event in result["audit_log"]:
+        print(
+            f"{event['event_type']} -> "
+            f"{event['message']}"
         )
