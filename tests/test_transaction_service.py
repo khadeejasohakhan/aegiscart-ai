@@ -44,4 +44,4 @@ def test_no_matching_product():
     )
 
     assert result["status"] == "NO_MATCH"
-    assert result["selected_product"] is None if "selected_product" in result else True
+    assert result["recommendation"]["selected"] is None
