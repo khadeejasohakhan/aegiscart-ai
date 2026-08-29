@@ -82,3 +82,59 @@ def test_wrong_color_returns_no_match():
 
     assert result["status"] == "NO_MATCH"
     assert result["recommendation"]["selected"] is None
+
+
+def test_excessive_merchant_upsell_is_blocked():
+    result = process_shopping_mission(
+        product_type="Abaya",
+        color="Black",
+        max_price=4000,
+        max_delivery_days=2,
+        preferred_quality="Premium",
+        priority="quality",
+        proposed_upsell={
+            "name": "Premium Hijab",
+            "price": 699
+        }
+    )
+
+    upsell = result["upsell_decision"]
+
+    assert upsell is not None
+    assert upsell["decision"] == "BLOCK"
+    assert upsell["percentage"] > 10
+
+    event_types = [
+        event["event_type"]
+        for event in result["audit_log"]
+    ]
+
+    assert "UPSELL_PROPOSED" in event_types
+    assert "UPSELL_POLICY_CHECK" in event_types
+
+
+def test_blocked_upsell_does_not_block_base_purchase():
+    result = process_shopping_mission(
+        product_type="Abaya",
+        color="Black",
+        max_price=4000,
+        max_delivery_days=2,
+        preferred_quality="Premium",
+        priority="quality",
+        proposed_upsell={
+            "name": "Premium Hijab",
+            "price": 699
+        }
+    )
+
+    assert result["upsell_decision"]["decision"] == "BLOCK"
+
+    assert (
+        result["status"]
+        == "AWAITING_HUMAN_APPROVAL"
+    )
+
+    assert (
+        result["selected_product"]["name"]
+        == "Midnight Abaya"
+    )
