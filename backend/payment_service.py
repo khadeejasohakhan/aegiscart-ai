@@ -1,13 +1,12 @@
 import os
 from uuid import uuid4
+from pathlib import Path
 
 import razorpay
 from dotenv import load_dotenv
 
 from audit_service import add_audit_event
 
-
-from pathlib import Path
 
 ENV_PATH = Path(__file__).parent.parent / ".env"
 load_dotenv(dotenv_path=ENV_PATH)
@@ -38,8 +37,6 @@ def create_payment_order(transaction):
     AegisCart has authorised the transaction.
     """
 
-    # Safety gate:
-    # Razorpay cannot be called before authorization.
     if transaction.get("status") != "READY_FOR_PAYMENT":
         return {
             "success": False,
@@ -50,9 +47,7 @@ def create_payment_order(transaction):
             )
         }
 
-    selected_product = transaction.get(
-        "selected_product"
-    )
+    selected_product = transaction.get("selected_product")
 
     if not selected_product:
         return {
@@ -62,14 +57,9 @@ def create_payment_order(transaction):
         }
 
     price_rupees = selected_product["price"]
-
-    # Razorpay expects the amount in paise.
-    # ₹3599 -> 359900
     amount_paise = int(price_rupees * 100)
 
-    receipt_id = (
-        f"aegis_{uuid4().hex[:12]}"
-    )
+    receipt_id = f"aegis_{uuid4().hex[:12]}"
 
     order_data = {
         "amount": amount_paise,
@@ -113,7 +103,6 @@ def create_payment_order(transaction):
             "error": str(error)
         }
 
-    # Save Razorpay information in transaction
     transaction["razorpay_order_id"] = (
         razorpay_order["id"]
     )
@@ -128,7 +117,6 @@ def create_payment_order(transaction):
 
     transaction["status"] = "PAYMENT_PENDING"
 
-    # Record payment creation
     if "audit_log" in transaction:
 
         add_audit_event(
@@ -164,6 +152,136 @@ def create_payment_order(transaction):
         "amount": razorpay_order["amount"],
         "currency": razorpay_order["currency"],
         "receipt": razorpay_order.get("receipt"),
+        "transaction": transaction
+    }
+
+
+def verify_payment(
+    transaction,
+    razorpay_payment_id,
+    razorpay_signature
+):
+    """
+    Verify Razorpay payment signature.
+
+    Payment is considered successful only
+    after signature verification passes.
+    """
+
+    if transaction.get("status") != "PAYMENT_PENDING":
+        return {
+            "success": False,
+            "status": transaction.get("status"),
+            "message": (
+                "Payment verification is not allowed "
+                "for this transaction state."
+            )
+        }
+
+    order_id = transaction.get(
+        "razorpay_order_id"
+    )
+
+    if not order_id:
+        return {
+            "success": False,
+            "status": transaction.get("status"),
+            "message": (
+                "Razorpay order ID is missing."
+            )
+        }
+
+    verification_data = {
+        "razorpay_order_id": order_id,
+        "razorpay_payment_id": razorpay_payment_id,
+        "razorpay_signature": razorpay_signature
+    }
+
+    try:
+        client = get_razorpay_client()
+
+        client.utility.verify_payment_signature(
+            verification_data
+        )
+
+    except Exception as error:
+
+        transaction["status"] = (
+            "PAYMENT_VERIFICATION_FAILED"
+        )
+
+        if "audit_log" in transaction:
+            add_audit_event(
+                transaction["audit_log"],
+                "PAYMENT_VERIFICATION_FAILED",
+                "Razorpay payment signature verification failed.",
+                {
+                    "razorpay_order_id": order_id,
+                    "razorpay_payment_id": (
+                        razorpay_payment_id
+                    ),
+                    "error_type": (
+                        type(error).__name__
+                    )
+                }
+            )
+
+            add_audit_event(
+                transaction["audit_log"],
+                "TRANSACTION_STATE",
+                "Transaction moved to payment verification failed.",
+                {
+                    "status": (
+                        "PAYMENT_VERIFICATION_FAILED"
+                    )
+                }
+            )
+
+        return {
+            "success": False,
+            "status": transaction["status"],
+            "message": (
+                "Payment signature verification failed."
+            )
+        }
+
+    transaction["razorpay_payment_id"] = (
+        razorpay_payment_id
+    )
+
+    transaction["status"] = "PAYMENT_VERIFIED"
+
+    if "audit_log" in transaction:
+
+        add_audit_event(
+            transaction["audit_log"],
+            "PAYMENT_VERIFIED",
+            "Razorpay payment signature verified successfully.",
+            {
+                "razorpay_order_id": order_id,
+                "razorpay_payment_id": (
+                    razorpay_payment_id
+                )
+            }
+        )
+
+        add_audit_event(
+            transaction["audit_log"],
+            "TRANSACTION_STATE",
+            "Transaction payment has been verified.",
+            {
+                "status": "PAYMENT_VERIFIED"
+            }
+        )
+
+    return {
+        "success": True,
+        "status": transaction["status"],
+        "order_id": order_id,
+        "payment_id": razorpay_payment_id,
+        "message": (
+            "Payment signature verified successfully."
+        ),
         "transaction": transaction
     }
 
@@ -213,12 +331,6 @@ if __name__ == "__main__":
             "Message:",
             result["message"]
         )
-
-        if result.get("error"):
-            print(
-                "Error:",
-                result["error"]
-            )
 
     print("\nAUDIT TRAIL")
 
