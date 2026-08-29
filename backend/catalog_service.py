@@ -22,6 +22,7 @@ def validate_catalog(catalog):
         "name",
         "category",
         "price",
+        "color",
         "quality",
         "delivery_days",
         "stock"

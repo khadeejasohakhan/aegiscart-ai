@@ -40,10 +40,12 @@ def generate_decision_receipt(transaction):
 if __name__ == "__main__":
 
     transaction = process_shopping_mission(
-        max_price=4000,
-        max_delivery_days=2,
-        preferred_quality="Premium"
-    )
+    product_type="Abaya",
+    color="Black",
+    max_price=4000,
+    max_delivery_days=2,
+    preferred_quality="Premium"
+)
 
     receipt = generate_decision_receipt(transaction)
 

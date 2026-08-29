@@ -5,43 +5,37 @@ from audit_service import add_audit_event
 
 
 def process_shopping_mission(
+    product_type,
+    color,
     max_price,
     max_delivery_days,
     preferred_quality
 ):
-    """
-    Process a shopping mission from recommendation
-    through financial policy evaluation.
-    """
-
     audit_log = []
 
-    # 1. Record the incoming mission
     add_audit_event(
         audit_log,
         "MISSION_RECEIVED",
         "Shopping mission received.",
         {
+            "product_type": product_type,
+            "color": color,
             "max_price": max_price,
             "max_delivery_days": max_delivery_days,
             "preferred_quality": preferred_quality
         }
     )
 
-    # 2. Load merchant catalog
     catalog = load_catalog()
 
-    # 3. Find the best eligible product
     recommendation = recommend_product(
-        products=catalog["products"],
+        product_type=product_type,
+        color=color,
         max_price=max_price,
         max_delivery_days=max_delivery_days,
         preferred_quality=preferred_quality
     )
 
-    selected_product = recommendation["selected"]
-
-    # Record rejected products
     for rejected_product in recommendation["rejected"]:
         add_audit_event(
             audit_log,
@@ -53,33 +47,44 @@ def process_shopping_mission(
             }
         )
 
-    # 4. Handle case where nothing matches
+    selected_product = recommendation["selected"]
+
     if selected_product is None:
+        add_audit_event(
+            audit_log,
+            "NO_MATCH",
+            "No product satisfied all buyer constraints.",
+            {
+                "product_type": product_type,
+                "color": color
+            }
+        )
+
         return {
             "status": "NO_MATCH",
-            "message": "No product satisfies the shopping constraints.",
+            "merchant": catalog["merchant"]["name"],
             "recommendation": recommendation,
-            "audit_log": audit_log
+            "audit_log": audit_log,
+            "message": "No product matched the buyer's requirements."
         }
-        
 
-    # 5. Record selected product
     add_audit_event(
         audit_log,
         "PRODUCT_SELECTED",
-        f"{selected_product['name']} selected as the best eligible product.",
+        f"{selected_product['name']} selected.",
         {
             "product": selected_product["name"],
+            "category": selected_product["category"],
+            "color": selected_product["color"],
             "price": selected_product["price"],
+            "quality": selected_product["quality"],
             "score": selected_product["score"]
         }
     )
 
-    # 6. Load Purchase Constitution
     policy = load_policy()
 
-    # 7. Evaluate financial authorization
-    policy_result = evaluate_purchase(
+    policy_decision = evaluate_purchase(
         selected_product["price"],
         policy
     )
@@ -87,66 +92,72 @@ def process_shopping_mission(
     add_audit_event(
         audit_log,
         "POLICY_CHECK",
-        policy_result["reason"],
+        policy_decision["reason"],
         {
-            "decision": policy_result["decision"],
+            "decision": policy_decision["decision"],
             "price": selected_product["price"]
         }
     )
 
-    # 8. Determine transaction state
-    if policy_result["decision"] == "ALLOW":
-        transaction_status = "READY_FOR_PAYMENT"
+    if policy_decision["decision"] == "ALLOW":
+        status = "READY_FOR_PAYMENT"
 
-    elif policy_result["decision"] == "REQUIRE_APPROVAL":
-        transaction_status = "AWAITING_HUMAN_APPROVAL"
+    elif policy_decision["decision"] == "REQUIRE_APPROVAL":
+        status = "AWAITING_HUMAN_APPROVAL"
 
     else:
-        transaction_status = "BLOCKED"
+        status = "BLOCKED"
 
-    # 9. Return transaction with its audit history
     return {
-        "status": transaction_status,
+        "status": status,
         "merchant": catalog["merchant"]["name"],
         "selected_product": selected_product,
-        "policy_decision": policy_result,
+        "policy_decision": policy_decision,
         "rejected_products": recommendation["rejected"],
+        "recommendation": recommendation,
         "audit_log": audit_log
     }
 
 
 if __name__ == "__main__":
-
-    result = process_shopping_mission(
+    transaction = process_shopping_mission(
+        product_type="Abaya",
+        color="Black",
         max_price=4000,
         max_delivery_days=2,
         preferred_quality="Premium"
     )
 
-    print("\n--- AegisCart Transaction ---")
-    print(f"Status: {result['status']}")
+    print("\nAEGISCART TRANSACTION SERVICE")
+    print("-----------------------------")
 
-    if result.get("selected_product"):
-        product = result["selected_product"]
+    print("Status:", transaction["status"])
+    print("Merchant:", transaction["merchant"])
 
-        print(f"Merchant: {result['merchant']}")
-        print(f"Product: {product['name']}")
-        print(f"Price: ₹{product['price']}")
+    if transaction["status"] == "NO_MATCH":
+        print(transaction["message"])
 
+    else:
+        selected = transaction["selected_product"]
+
+        print("Selected Product:", selected["name"])
+        print("Category:", selected["category"])
+        print("Color:", selected["color"])
+        print("Price: ₹", selected["price"], sep="")
         print(
-            "Policy decision: "
-            f"{result['policy_decision']['decision']}"
+            "Policy Decision:",
+            transaction["policy_decision"]["decision"]
+        )
+        print(
+            "Reason:",
+            transaction["policy_decision"]["reason"]
         )
 
-        print(
-            "Reason: "
-            f"{result['policy_decision']['reason']}"
-        )
+    print("\nAUDIT TRAIL")
 
-    print("\n--- Audit Trail ---")
-
-    for event in result["audit_log"]:
+    for event in transaction["audit_log"]:
         print(
-            f"{event['event_type']} -> "
-            f"{event['message']}"
+            event["event_type"],
+            "->",
+            event["message"]
         )

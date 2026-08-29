@@ -4,30 +4,28 @@ from decision_receipt import generate_decision_receipt
 
 
 def run_agentic_checkout(user_request):
-    """
-    Run a natural-language shopping request through
-    the complete AegisCart decision pipeline.
-    """
+    # 1. Buyer Agent interprets natural language
+    parsed = parse_shopping_request(user_request)
 
-    # 1. Buyer Agent interprets the request
-    parsed_result = parse_shopping_request(user_request)
-
-    if not parsed_result["success"]:
+    if not parsed["success"]:
         return {
             "success": False,
-            "error": parsed_result["error"]
+            "stage": "BUYER_AGENT",
+            "error": parsed["error"]
         }
 
-    mission = parsed_result["mission"]
+    mission = parsed["mission"]
 
-    # 2. Deterministic commerce engine handles the mission
+    # 2. Deterministic transaction engine enforces constraints
     transaction = process_shopping_mission(
+        product_type=mission["product_type"],
+        color=mission["color"],
         max_price=mission["max_price"],
         max_delivery_days=mission["max_delivery_days"],
         preferred_quality=mission["preferred_quality"]
     )
 
-    # 3. Generate explainable decision receipt
+    # 3. Create explainable decision receipt
     receipt = generate_decision_receipt(transaction)
 
     return {
@@ -39,6 +37,8 @@ def run_agentic_checkout(user_request):
 
 
 if __name__ == "__main__":
+    print("\nAEGISCART AGENTIC CHECKOUT")
+    print("--------------------------")
 
     user_request = input(
         "\nWhat would you like AegisCart to buy?\n> "
@@ -47,67 +47,61 @@ if __name__ == "__main__":
     result = run_agentic_checkout(user_request)
 
     if not result["success"]:
-        print(f"\nRequest failed: {result['error']}")
+        print("\n❌ AegisCart could not continue.")
+        print("Stage:", result["stage"])
+        print("Reason:", result["error"])
 
     else:
         mission = result["mission"]
         transaction = result["transaction"]
         receipt = result["receipt"]
 
-        print("\n========== AEGISCART ==========")
-
-        print("\nInterpreted Mission")
-        print(f"Product: {mission['product_type']}")
-        print(f"Color: {mission.get('color', 'Not specified')}")
-        print(f"Budget: ₹{mission['max_price']}")
+        print("\n✅ BUYER INTENT")
+        print("----------------")
+        print("Product:", mission["product_type"])
+        print("Color:", mission["color"])
+        print("Budget: ₹", mission["max_price"], sep="")
         print(
-            f"Maximum Delivery: "
-            f"{mission['max_delivery_days']} days"
+            "Delivery:",
+            mission["max_delivery_days"],
+            "days"
         )
         print(
-            f"Preferred Quality: "
-            f"{mission['preferred_quality']}"
+            "Preferred Quality:",
+            mission["preferred_quality"]
         )
+        print("Priority:", mission["priority"])
 
-        print("\nRecommended Product")
+        print("\n🛒 COMMERCE DECISION")
+        print("--------------------")
 
-        selected = receipt["selected_product"]
+        if transaction["status"] == "NO_MATCH":
+            print("Status: NO_MATCH")
+            print(transaction["message"])
 
-        if selected:
-            print(f"Product: {selected['name']}")
-            print(f"Price: ₹{selected['price']}")
-            print(f"Quality: {selected['quality']}")
-            print(f"Match Score: {selected['score']}")
         else:
-            print("No suitable product found.")
+            selected = transaction["selected_product"]
 
-        print("\nPurchase Constitution")
+            print("Selected:", selected["name"])
+            print("Category:", selected["category"])
+            print("Color:", selected["color"])
+            print("Price: ₹", selected["price"], sep="")
+            print("Score:", selected["score"])
 
-        policy = receipt["policy_decision"]
-
-        if policy:
-            print(f"Decision: {policy['decision']}")
-            print(f"Reason: {policy['reason']}")
-
-        print(
-            f"\nTransaction Status: "
-            f"{transaction['status']}"
-        )
-
-        print("\nRejected Alternatives")
-
-        for product in receipt["rejected_products"]:
-            reasons = ", ".join(product["reasons"])
             print(
-                f"{product['product']} -> {reasons}"
+                "Policy:",
+                transaction["policy_decision"]["decision"]
             )
 
-        print("\nDecision Timeline")
-
-        for event in receipt["decision_timeline"]:
             print(
-                f"{event['event']} -> "
-                f"{event['message']}"
+                "Transaction Status:",
+                transaction["status"]
             )
-
-        print("\n================================")
+            print("\n📋 AGENT DECISION RECEIPT")
+            print("-------------------------")
+            for event in receipt["decision_timeline"]:
+                print(
+                    event["event"],
+                    "->",
+                    event["message"]
+                    )

@@ -9,6 +9,8 @@ from transaction_service import process_shopping_mission
 
 def test_standard_mission_requires_approval():
     result = process_shopping_mission(
+        product_type="Abaya",
+        color="Black",
         max_price=4000,
         max_delivery_days=2,
         preferred_quality="Premium"
@@ -21,6 +23,8 @@ def test_standard_mission_requires_approval():
 
 def test_transaction_creates_audit_trail():
     result = process_shopping_mission(
+        product_type="Abaya",
+        color="Black",
         max_price=4000,
         max_delivery_days=2,
         preferred_quality="Premium"
@@ -36,10 +40,38 @@ def test_transaction_creates_audit_trail():
     assert "POLICY_CHECK" in event_types
 
 
-def test_no_matching_product():
+def test_no_matching_product_due_to_budget():
     result = process_shopping_mission(
+        product_type="Abaya",
+        color="Black",
         max_price=500,
         max_delivery_days=1,
+        preferred_quality="Premium"
+    )
+
+    assert result["status"] == "NO_MATCH"
+    assert result["recommendation"]["selected"] is None
+
+
+def test_wrong_product_type_returns_no_match():
+    result = process_shopping_mission(
+        product_type="Sneakers",
+        color="White",
+        max_price=4000,
+        max_delivery_days=2,
+        preferred_quality="Premium"
+    )
+
+    assert result["status"] == "NO_MATCH"
+    assert result["recommendation"]["selected"] is None
+
+
+def test_wrong_color_returns_no_match():
+    result = process_shopping_mission(
+        product_type="Abaya",
+        color="White",
+        max_price=4000,
+        max_delivery_days=2,
         preferred_quality="Premium"
     )
 
