@@ -2,6 +2,7 @@ from catalog_service import load_catalog
 
 
 def normalize_text(value):
+    """Normalize text for safe comparisons."""
     return str(value).strip().lower()
 
 
@@ -12,6 +13,13 @@ def filter_products(
     max_price,
     max_delivery_days
 ):
+    """
+    Apply hard buyer constraints.
+
+    These rules are deterministic.
+    AI cannot override them.
+    """
+
     eligible = []
     rejected = []
 
@@ -21,40 +29,45 @@ def filter_products(
     for product in products:
         reasons = []
 
-        product_category = normalize_text(product["category"])
-        product_color = normalize_text(product["color"])
+        product_category = normalize_text(
+            product["category"]
+        )
 
-        # Product type must match
+        product_color = normalize_text(
+            product["color"]
+        )
+
         if product_category != requested_type:
             reasons.append(
-                f"category '{product['category']}' does not match "
-                f"requested type '{product_type}'"
+                f"category does not match requested "
+                f"{product_type}"
             )
 
-        # Color must match unless buyer said Any
-        if requested_color != "any":
-            if product_color != requested_color:
-                reasons.append(
-                    f"color '{product['color']}' does not match "
-                    f"requested color '{color}'"
-                )
+        if (
+            requested_color != "any"
+            and product_color != requested_color
+        ):
+            reasons.append(
+                f"color does not match requested {color}"
+            )
 
-        # Budget constraint
         if product["price"] > max_price:
             reasons.append(
-                f"price ₹{product['price']} exceeds budget ₹{max_price}"
+                "price exceeds budget"
             )
 
-        # Delivery constraint
         if product["delivery_days"] > max_delivery_days:
             reasons.append(
-                f"delivery takes {product['delivery_days']} days, "
-                f"which exceeds the {max_delivery_days}-day limit"
+                f"delivery takes "
+                f"{product['delivery_days']} days, "
+                f"which exceeds the "
+                f"{max_delivery_days}-day limit"
             )
 
-        # Stock constraint
         if product["stock"] <= 0:
-            reasons.append("product is out of stock")
+            reasons.append(
+                "product is out of stock"
+            )
 
         if reasons:
             rejected.append({
@@ -67,26 +80,84 @@ def filter_products(
     return eligible, rejected
 
 
-def score_product(product, preferred_quality):
-    score = 0
+def score_product(
+    product,
+    preferred_quality,
+    priority
+):
+    """
+    Score eligible products according to buyer priority.
 
-    # Strong reward when quality matches buyer preference
-    if normalize_text(product["quality"]) == normalize_text(preferred_quality):
-        score += 10
+    Hard constraints are already enforced before scoring.
+    Priority only affects ranking between valid products.
+    """
 
-    # Slight preference for faster delivery
-    score += max(
-        0,
-        5 - product["delivery_days"]
+    quality_scores = {
+        "premium": 3,
+        "good": 2,
+        "standard": 1
+    }
+
+    product_quality = normalize_text(
+        product["quality"]
     )
 
-    # Slight preference for lower price
-    score += max(
+    preferred_quality_normalized = normalize_text(
+        preferred_quality
+    )
+
+    priority = normalize_text(priority)
+
+    quality_score = quality_scores.get(
+        product_quality,
+        0
+    )
+
+    if (
+        product_quality
+        == preferred_quality_normalized
+    ):
+        quality_score += 2
+
+    price_score = max(
         0,
         5 - (product["price"] / 1000)
     )
 
-    return round(score, 2)
+    delivery_score = max(
+        0,
+        5 - product["delivery_days"]
+    )
+
+    if priority == "quality":
+        final_score = (
+            quality_score * 3
+            + delivery_score
+            + price_score
+        )
+
+    elif priority == "price":
+        final_score = (
+            price_score * 3
+            + quality_score
+            + delivery_score
+        )
+
+    elif priority == "delivery":
+        final_score = (
+            delivery_score * 3
+            + quality_score
+            + price_score
+        )
+
+    else:
+        final_score = (
+            quality_score
+            + price_score
+            + delivery_score
+        )
+
+    return round(final_score, 2)
 
 
 def recommend_product(
@@ -94,34 +165,40 @@ def recommend_product(
     color,
     max_price,
     max_delivery_days,
-    preferred_quality
+    preferred_quality,
+    priority
 ):
+    """
+    Select the best valid product for the buyer mission.
+    """
+
     catalog = load_catalog()
 
-    products = catalog["products"]
-
     eligible, rejected = filter_products(
-        products,
-        product_type,
-        color,
-        max_price,
-        max_delivery_days
+        products=catalog["products"],
+        product_type=product_type,
+        color=color,
+        max_price=max_price,
+        max_delivery_days=max_delivery_days
     )
 
     scored_products = []
 
     for product in eligible:
-        product_copy = product.copy()
+        product_with_score = product.copy()
 
-        product_copy["score"] = score_product(
-            product_copy,
-            preferred_quality
+        product_with_score["score"] = score_product(
+            product=product,
+            preferred_quality=preferred_quality,
+            priority=priority
         )
 
-        scored_products.append(product_copy)
+        scored_products.append(
+            product_with_score
+        )
 
     scored_products.sort(
-        key=lambda product: product["score"],
+        key=lambda item: item["score"],
         reverse=True
     )
 
@@ -133,41 +210,41 @@ def recommend_product(
 
     return {
         "selected": selected,
-        "eligible": scored_products,
-        "rejected": rejected
+        "eligible_products": scored_products,
+        "rejected_products": rejected
     }
 
 
 if __name__ == "__main__":
+
+    print("\nAEGISCART RECOMMENDATION ENGINE")
+    print("--------------------------------")
+
     result = recommend_product(
         product_type="Abaya",
         color="Black",
         max_price=4000,
         max_delivery_days=2,
-        preferred_quality="Premium"
+        preferred_quality="Premium",
+        priority="quality"
     )
 
     selected = result["selected"]
 
-    print("\nAEGISCART RECOMMENDATION ENGINE")
-    print("--------------------------------")
-
     if selected:
-        print("Selected:", selected["name"])
+        print("\nSelected Product")
+        print("Name:", selected["name"])
         print("Category:", selected["category"])
         print("Color:", selected["color"])
         print("Price: ₹", selected["price"], sep="")
         print("Quality:", selected["quality"])
         print("Score:", selected["score"])
-    else:
-        print("No eligible product found.")
 
-    print("\nRejected Products:")
+    print("\nRejected Products")
 
-    for item in result["rejected"]:
+    for product in result["rejected_products"]:
         print(
-            "-",
-            item["product"],
+            product["product"],
             "->",
-            "; ".join(item["reasons"])
+            ", ".join(product["reasons"])
         )

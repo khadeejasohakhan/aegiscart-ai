@@ -18,13 +18,13 @@ def run_agentic_checkout(user_request):
 
     # 2. Deterministic transaction engine enforces constraints
     transaction = process_shopping_mission(
-        product_type=mission["product_type"],
-        color=mission["color"],
-        max_price=mission["max_price"],
-        max_delivery_days=mission["max_delivery_days"],
-        preferred_quality=mission["preferred_quality"]
-    )
-
+    product_type=mission["product_type"],
+    color=mission["color"],
+    max_price=mission["max_price"],
+    max_delivery_days=mission["max_delivery_days"],
+    preferred_quality=mission["preferred_quality"],
+    priority=mission["priority"]
+)
     # 3. Create explainable decision receipt
     receipt = generate_decision_receipt(transaction)
 

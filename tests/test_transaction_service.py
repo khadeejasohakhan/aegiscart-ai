@@ -13,7 +13,8 @@ def test_standard_mission_requires_approval():
         color="Black",
         max_price=4000,
         max_delivery_days=2,
-        preferred_quality="Premium"
+        preferred_quality="Premium",
+        priority="quality"
     )
 
     assert result["selected_product"]["name"] == "Midnight Abaya"
@@ -27,7 +28,8 @@ def test_transaction_creates_audit_trail():
         color="Black",
         max_price=4000,
         max_delivery_days=2,
-        preferred_quality="Premium"
+        preferred_quality="Premium",
+        priority="quality"
     )
 
     event_types = [
@@ -46,7 +48,8 @@ def test_no_matching_product_due_to_budget():
         color="Black",
         max_price=500,
         max_delivery_days=1,
-        preferred_quality="Premium"
+        preferred_quality="Premium",
+        priority="quality"
     )
 
     assert result["status"] == "NO_MATCH"
@@ -59,7 +62,8 @@ def test_wrong_product_type_returns_no_match():
         color="White",
         max_price=4000,
         max_delivery_days=2,
-        preferred_quality="Premium"
+        preferred_quality="Premium",
+        priority="quality"
     )
 
     assert result["status"] == "NO_MATCH"
@@ -72,7 +76,8 @@ def test_wrong_color_returns_no_match():
         color="White",
         max_price=4000,
         max_delivery_days=2,
-        preferred_quality="Premium"
+        preferred_quality="Premium",
+        priority="quality"
     )
 
     assert result["status"] == "NO_MATCH"

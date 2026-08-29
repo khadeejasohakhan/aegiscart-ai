@@ -9,10 +9,12 @@ def process_shopping_mission(
     color,
     max_price,
     max_delivery_days,
-    preferred_quality
+    preferred_quality,
+    priority
 ):
     audit_log = []
 
+    # Record the buyer mission
     add_audit_event(
         audit_log,
         "MISSION_RECEIVED",
@@ -22,21 +24,26 @@ def process_shopping_mission(
             "color": color,
             "max_price": max_price,
             "max_delivery_days": max_delivery_days,
-            "preferred_quality": preferred_quality
+            "preferred_quality": preferred_quality,
+            "priority": priority
         }
     )
 
+    # Load merchant catalog
     catalog = load_catalog()
 
+    # Find the best product that satisfies hard constraints
     recommendation = recommend_product(
         product_type=product_type,
         color=color,
         max_price=max_price,
         max_delivery_days=max_delivery_days,
-        preferred_quality=preferred_quality
+        preferred_quality=preferred_quality,
+        priority=priority
     )
 
-    for rejected_product in recommendation["rejected"]:
+    # Record rejected products
+    for rejected_product in recommendation["rejected_products"]:
         add_audit_event(
             audit_log,
             "PRODUCT_REJECTED",
@@ -49,6 +56,7 @@ def process_shopping_mission(
 
     selected_product = recommendation["selected"]
 
+    # Stop safely if nothing matches
     if selected_product is None:
         add_audit_event(
             audit_log,
@@ -56,7 +64,8 @@ def process_shopping_mission(
             "No product satisfied all buyer constraints.",
             {
                 "product_type": product_type,
-                "color": color
+                "color": color,
+                "priority": priority
             }
         )
 
@@ -68,6 +77,7 @@ def process_shopping_mission(
             "message": "No product matched the buyer's requirements."
         }
 
+    # Record selected product
     add_audit_event(
         audit_log,
         "PRODUCT_SELECTED",
@@ -78,10 +88,12 @@ def process_shopping_mission(
             "color": selected_product["color"],
             "price": selected_product["price"],
             "quality": selected_product["quality"],
-            "score": selected_product["score"]
+            "score": selected_product["score"],
+            "priority": priority
         }
     )
 
+    # Apply deterministic purchase policy
     policy = load_policy()
 
     policy_decision = evaluate_purchase(
@@ -99,6 +111,7 @@ def process_shopping_mission(
         }
     )
 
+    # Convert policy decision into transaction state
     if policy_decision["decision"] == "ALLOW":
         status = "READY_FOR_PAYMENT"
 
@@ -113,19 +126,21 @@ def process_shopping_mission(
         "merchant": catalog["merchant"]["name"],
         "selected_product": selected_product,
         "policy_decision": policy_decision,
-        "rejected_products": recommendation["rejected"],
+        "rejected_products": recommendation["rejected_products"],
         "recommendation": recommendation,
         "audit_log": audit_log
     }
 
 
 if __name__ == "__main__":
+
     transaction = process_shopping_mission(
         product_type="Abaya",
         color="Black",
         max_price=4000,
         max_delivery_days=2,
-        preferred_quality="Premium"
+        preferred_quality="Premium",
+        priority="quality"
     )
 
     print("\nAEGISCART TRANSACTION SERVICE")
@@ -144,10 +159,14 @@ if __name__ == "__main__":
         print("Category:", selected["category"])
         print("Color:", selected["color"])
         print("Price: ₹", selected["price"], sep="")
+        print("Quality:", selected["quality"])
+        print("Score:", selected["score"])
+
         print(
             "Policy Decision:",
             transaction["policy_decision"]["decision"]
         )
+
         print(
             "Reason:",
             transaction["policy_decision"]["reason"]
