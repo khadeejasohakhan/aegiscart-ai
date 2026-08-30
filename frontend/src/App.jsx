@@ -1,44 +1,521 @@
 import { useState } from "react";
 import "./App.css";
 
+const API_URL = "http://127.0.0.1:8000";
+
+// ---------------------------------------------------------
+// Load Razorpay Checkout Script
+// ---------------------------------------------------------
+
+function loadRazorpayScript() {
+  return new Promise((resolve) => {
+    if (window.Razorpay) {
+      resolve(true);
+      return;
+    }
+
+    const script = document.createElement("script");
+
+    script.src =
+      "https://checkout.razorpay.com/v1/checkout.js";
+
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+
+    document.body.appendChild(script);
+  });
+}
+
+
+// ---------------------------------------------------------
+// App
+// ---------------------------------------------------------
+
 function App() {
   const [request, setRequest] = useState("");
+
   const [result, setResult] = useState(null);
+
   const [loading, setLoading] = useState(false);
+  const [approving, setApproving] = useState(false);
+  const [paying, setPaying] = useState(false);
+
+  const [error, setError] = useState("");
+  const [paymentMessage, setPaymentMessage] =
+    useState("");
+
+
+  // -------------------------------------------------------
+  // Start Agentic Checkout
+  // -------------------------------------------------------
 
   const handleCheckout = async () => {
-    if (!request.trim()) return;
+    if (!request.trim()) {
+      setError(
+        "Please enter a shopping request first."
+      );
+      return;
+    }
 
     setLoading(true);
     setResult(null);
+    setError("");
+    setPaymentMessage("");
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          user_request: request,
-        }),
-      });
+      const response = await fetch(
+        `${API_URL}/checkout`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify({
+            user_request: request,
+          }),
+        }
+      );
 
       const data = await response.json();
+
+      console.log(
+        "AegisCart checkout response:",
+        data
+      );
+
+      // HTTP failure
+      if (!response.ok) {
+        throw new Error(
+          data.detail ||
+            "Checkout request failed."
+        );
+      }
+
+      // Buyer agent / backend workflow failure
+      if (!data.success) {
+        throw new Error(
+          data.error ||
+            data.message ||
+            "AegisCart could not process this request."
+        );
+      }
+
+      // Successful transaction
       setResult(data);
-    } catch (error) {
-      setResult({
-        success: false,
-        error: "Could not connect to AegisCart backend.",
-      });
+    } catch (err) {
+      console.error(
+        "Checkout error:",
+        err
+      );
+
+      setError(
+        err.message ||
+          "AegisCart could not process this request."
+      );
     } finally {
       setLoading(false);
     }
   };
 
+
+  // -------------------------------------------------------
+  // Human Approval
+  // -------------------------------------------------------
+
+  const handleApproval = async () => {
+    if (!result?.transaction_id) {
+      setError(
+        "Transaction ID is missing."
+      );
+      return;
+    }
+
+    setApproving(true);
+    setError("");
+
+    try {
+      const response = await fetch(
+        `${API_URL}/approve`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify({
+            transaction_id:
+              result.transaction_id,
+
+            approved_by: "demo_user",
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      console.log(
+        "Approval response:",
+        data
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          data.detail ||
+            "Approval request failed."
+        );
+      }
+
+      if (!data.success) {
+        throw new Error(
+          data.message ||
+            "Purchase could not be approved."
+        );
+      }
+
+      setResult((previous) => ({
+        ...previous,
+
+        transaction:
+          data.transaction,
+      }));
+    } catch (err) {
+      console.error(
+        "Approval error:",
+        err
+      );
+
+      setError(
+        err.message ||
+          "Human approval failed."
+      );
+    } finally {
+      setApproving(false);
+    }
+  };
+
+
+  // -------------------------------------------------------
+  // Razorpay Payment
+  // -------------------------------------------------------
+
+  const handlePayment = async () => {
+    if (!result?.transaction_id) {
+      setError(
+        "Transaction ID is missing."
+      );
+      return;
+    }
+
+    setPaying(true);
+    setError("");
+    setPaymentMessage("");
+
+    try {
+      // ---------------------------------------------------
+      // 1. Load Razorpay Checkout
+      // ---------------------------------------------------
+
+      const loaded =
+        await loadRazorpayScript();
+
+      if (!loaded) {
+        throw new Error(
+          "Razorpay Checkout could not be loaded."
+        );
+      }
+
+
+      // ---------------------------------------------------
+      // 2. Get Public Razorpay Key
+      // ---------------------------------------------------
+
+      const configResponse =
+        await fetch(
+          `${API_URL}/config`
+        );
+
+      const config =
+        await configResponse.json();
+
+      if (
+        !configResponse.ok ||
+        !config.razorpay_key_id
+      ) {
+        throw new Error(
+          config.detail ||
+            "Razorpay configuration could not be loaded."
+        );
+      }
+
+
+      // ---------------------------------------------------
+      // 3. Create Razorpay Order
+      // ---------------------------------------------------
+
+      const orderResponse =
+        await fetch(
+          `${API_URL}/payment/create`,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify({
+              transaction_id:
+                result.transaction_id,
+            }),
+          }
+        );
+
+      const orderData =
+        await orderResponse.json();
+
+      console.log(
+        "Payment order response:",
+        orderData
+      );
+
+      if (!orderResponse.ok) {
+        throw new Error(
+          orderData.detail ||
+            "Could not create Razorpay order."
+        );
+      }
+
+      if (!orderData.success) {
+        throw new Error(
+          orderData.message ||
+            "Payment order could not be created."
+        );
+      }
+
+      if (!orderData.order_id) {
+        throw new Error(
+          "Razorpay order ID was not returned."
+        );
+      }
+
+
+      // ---------------------------------------------------
+      // Update UI to PAYMENT_PENDING
+      // ---------------------------------------------------
+
+      if (orderData.transaction) {
+        setResult((previous) => ({
+          ...previous,
+          transaction:
+            orderData.transaction,
+        }));
+      }
+
+
+      // ---------------------------------------------------
+      // 4. Razorpay Checkout Options
+      // ---------------------------------------------------
+
+      const options = {
+        key: config.razorpay_key_id,
+
+        amount: orderData.amount,
+
+        currency:
+          orderData.currency || "INR",
+
+        name: "AegisCart",
+
+        description:
+          result.transaction
+            ?.selected_product
+            ?.name ||
+          "Agentic Commerce Purchase",
+
+        order_id:
+          orderData.order_id,
+
+
+        // -------------------------------------------------
+        // Razorpay Success Callback
+        // -------------------------------------------------
+
+        handler: async function (
+          razorpayResponse
+        ) {
+          try {
+            console.log(
+              "Razorpay success callback received"
+            );
+
+            const verifyResponse =
+              await fetch(
+                `${API_URL}/payment/verify`,
+                {
+                  method: "POST",
+
+                  headers: {
+                    "Content-Type":
+                      "application/json",
+                  },
+
+                  body: JSON.stringify({
+                    transaction_id:
+                      result.transaction_id,
+
+                    payment_id:
+                      razorpayResponse
+                        .razorpay_payment_id,
+
+                    signature:
+                      razorpayResponse
+                        .razorpay_signature,
+                  }),
+                }
+              );
+
+            const verifyData =
+              await verifyResponse.json();
+
+            console.log(
+              "Verification response:",
+              verifyData
+            );
+
+            if (!verifyResponse.ok) {
+              throw new Error(
+                verifyData.detail ||
+                  "Payment verification request failed."
+              );
+            }
+
+            if (!verifyData.success) {
+              throw new Error(
+                verifyData.message ||
+                  "Payment signature could not be verified."
+              );
+            }
+
+            setResult((previous) => ({
+              ...previous,
+
+              transaction:
+                verifyData.transaction,
+            }));
+
+            setPaymentMessage(
+              "✓ Razorpay payment signature verified securely."
+            );
+          } catch (err) {
+            console.error(
+              "Verification error:",
+              err
+            );
+
+            setError(
+              err.message ||
+                "Payment verification failed."
+            );
+          }
+        },
+
+
+        // -------------------------------------------------
+        // User Closes Checkout
+        // -------------------------------------------------
+
+        modal: {
+          ondismiss: function () {
+            setPaymentMessage(
+              "Payment window closed. No payment was confirmed."
+            );
+          },
+        },
+
+
+        // -------------------------------------------------
+        // Razorpay UI
+        // -------------------------------------------------
+
+        theme: {
+          color: "#6d5dfc",
+        },
+      };
+
+
+      // ---------------------------------------------------
+      // 5. Open Razorpay Checkout
+      // ---------------------------------------------------
+
+      const razorpay =
+        new window.Razorpay(options);
+
+
+      // ---------------------------------------------------
+      // Payment Failure
+      // ---------------------------------------------------
+
+      razorpay.on(
+        "payment.failed",
+        function (response) {
+          console.error(
+            "Razorpay payment failed:",
+            response.error
+          );
+
+          setError(
+            response.error?.description ||
+              "Payment failed. No purchase was completed."
+          );
+        }
+      );
+
+
+      razorpay.open();
+    } catch (err) {
+      console.error(
+        "Payment error:",
+        err
+      );
+
+      setError(
+        err.message ||
+          "Unable to start Razorpay payment."
+      );
+    } finally {
+      setPaying(false);
+    }
+  };
+
+
+  // -------------------------------------------------------
+  // Convenient Variables
+  // -------------------------------------------------------
+
+  const transaction =
+    result?.transaction;
+
+  const product =
+    transaction?.selected_product;
+
+  const policy =
+    transaction?.policy_decision;
+
+
+  // -------------------------------------------------------
+  // UI
+  // -------------------------------------------------------
+
   return (
     <div className="app">
       <div className="container">
-        <p className="eyebrow">AGENTIC COMMERCE</p>
+
+        <p className="eyebrow">
+          AGENTIC COMMERCE
+        </p>
 
         <h1>AegisCart</h1>
 
@@ -47,66 +524,271 @@ function App() {
         </p>
 
         <p className="description">
-          Tell your AI buyer what you need. AegisCart evaluates products,
-          applies your spending rules, and prevents unauthorized purchases.
+          Tell your AI buyer what you need.
+          AegisCart evaluates products,
+          applies your spending rules,
+          and prevents unauthorized purchases.
         </p>
 
+
+        {/* Shopping Request */}
+
         <div className="request-card">
-          <label>What should your AI buyer find?</label>
+
+          <label>
+            What should your AI buyer find?
+          </label>
 
           <textarea
             value={request}
-            onChange={(event) => setRequest(event.target.value)}
+
+            onChange={(event) =>
+              setRequest(
+                event.target.value
+              )
+            }
+
             placeholder="Find me a premium black abaya under ₹4000 within 2 days. Quality matters most."
           />
 
-          <button onClick={handleCheckout} disabled={loading}>
-            {loading ? "AI Buyer is thinking..." : "Start Agentic Checkout"}
+          <button
+            onClick={handleCheckout}
+            disabled={loading}
+          >
+            {loading
+              ? "AI Buyer is thinking..."
+              : "Start Agentic Checkout"}
           </button>
+
         </div>
 
-        {result && (
-          <div className="result-card">
-            <h2>Agent Decision</h2>
 
-            {result.success ? (
-              <>
-                <p>
-                  <strong>Status:</strong>{" "}
-                  {result.transaction?.status}
-                </p>
+        {/* Error */}
 
-                <p>
-                  <strong>Selected:</strong>{" "}
-                  {result.transaction?.selected_product?.name || "No match"}
-                </p>
+        {error && (
+          <div className="error-message">
+            <strong>
+              AegisCart could not continue
+            </strong>
 
-                {result.transaction?.selected_product && (
+            <p>
+              {error}
+            </p>
+          </div>
+        )}
+
+
+        {/* Payment Message */}
+
+        {paymentMessage && (
+          <div className="approved-box">
+            {paymentMessage}
+          </div>
+        )}
+
+
+        {/* Successful Agent Decision */}
+
+        {result?.success &&
+          transaction && (
+            <div className="result-card">
+
+              <div className="result-heading">
+
+                <div>
+                  <p className="eyebrow">
+                    AGENT DECISION
+                  </p>
+
+                  <h2>
+                    {product?.name ||
+                      "No matching product"}
+                  </h2>
+                </div>
+
+                <span className="status-badge">
+                  {transaction.status}
+                </span>
+
+              </div>
+
+
+              {/* Product Details */}
+
+              {product && (
+                <div className="product-grid">
+
+                  <div>
+                    <span>
+                      Price
+                    </span>
+
+                    <strong>
+                      ₹{product.price}
+                    </strong>
+                  </div>
+
+
+                  <div>
+                    <span>
+                      Quality
+                    </span>
+
+                    <strong>
+                      {product.quality}
+                    </strong>
+                  </div>
+
+
+                  <div>
+                    <span>
+                      Delivery
+                    </span>
+
+                    <strong>
+                      {product.delivery_days} days
+                    </strong>
+                  </div>
+
+
+                  <div>
+                    <span>
+                      Agent score
+                    </span>
+
+                    <strong>
+                      {product.score ??
+                        "—"}
+                    </strong>
+                  </div>
+
+                </div>
+              )}
+
+
+              {/* Purchase Constitution */}
+
+              {policy && (
+                <div className="policy-box">
+
+                  <strong>
+                    Purchase Constitution
+                  </strong>
+
+                  <p>
+                    {policy.reason}
+                  </p>
+
+                </div>
+              )}
+
+
+              {/* Awaiting Approval */}
+
+              {transaction.status ===
+                "AWAITING_HUMAN_APPROVAL" &&
+                product && (
+                  <button
+                    className="approval-button"
+
+                    onClick={
+                      handleApproval
+                    }
+
+                    disabled={
+                      approving
+                    }
+                  >
+                    {approving
+                      ? "Approving..."
+                      : `Approve ₹${product.price} Purchase`}
+                  </button>
+                )}
+
+
+              {/* Ready for Payment */}
+
+              {transaction.status ===
+                "READY_FOR_PAYMENT" &&
+                product && (
                   <>
-                    <p>
-                      <strong>Price:</strong> ₹
-                      {result.transaction.selected_product.price}
-                    </p>
+                    <div className="approved-box">
+                      ✓ Human approval recorded.
+                      Transaction is ready for
+                      secure payment.
+                    </div>
 
-                    <p>
-                      <strong>Quality:</strong>{" "}
-                      {result.transaction.selected_product.quality}
-                    </p>
+                    <button
+                      onClick={
+                        handlePayment
+                      }
+
+                      disabled={
+                        paying
+                      }
+                    >
+                      {paying
+                        ? "Preparing secure checkout..."
+                        : `Pay ₹${product.price} with Razorpay`}
+                    </button>
                   </>
                 )}
 
-                {result.transaction?.policy_decision && (
-                  <p>
-                    <strong>Policy:</strong>{" "}
-                    {result.transaction.policy_decision.reason}
-                  </p>
+
+              {/* Payment Pending */}
+
+              {transaction.status ===
+                "PAYMENT_PENDING" && (
+                  <div className="policy-box">
+
+                    <strong>
+                      Payment Pending
+                    </strong>
+
+                    <p>
+                      Razorpay order created.
+                      Waiting for the payment
+                      result.
+                    </p>
+
+                  </div>
                 )}
-              </>
-            ) : (
-              <p>Request failed. Please try again.</p>
-            )}
-          </div>
-        )}
+
+
+              {/* Payment Verified */}
+
+              {transaction.status ===
+                "PAYMENT_VERIFIED" && (
+                  <div className="approved-box">
+
+                    ✓ Razorpay payment signature
+                    verified by AegisCart.
+
+                  </div>
+                )}
+
+
+              {/* No Matching Product */}
+
+              {transaction.status ===
+                "NO_MATCH" && (
+                  <div className="policy-box">
+
+                    <strong>
+                      No safe match found
+                    </strong>
+
+                    <p>
+                      {transaction.message ||
+                        "No product satisfied all of your constraints."}
+                    </p>
+
+                  </div>
+                )}
+
+            </div>
+          )}
+
       </div>
     </div>
   );

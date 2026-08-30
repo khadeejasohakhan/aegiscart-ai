@@ -147,3 +147,90 @@ button:disabled {
     border-radius: 18px;
   }
 }
+
+.result-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.result-heading h2 {
+  margin: 4px 0 0;
+}
+
+.status-badge {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(138, 100, 255, 0.12);
+  border: 1px solid rgba(138, 100, 255, 0.35);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.product-grid div {
+  padding: 16px;
+  background: #0d1016;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+}
+
+.product-grid span {
+  display: block;
+  margin-bottom: 6px;
+  color: #777f91;
+  font-size: 0.8rem;
+}
+
+.product-grid strong {
+  font-size: 1rem;
+}
+
+.policy-box {
+  padding: 18px;
+  border-radius: 14px;
+  background: rgba(255, 183, 77, 0.08);
+  border: 1px solid rgba(255, 183, 77, 0.2);
+}
+
+.policy-box p {
+  margin-bottom: 0;
+}
+
+.approval-button {
+  margin-top: 18px;
+}
+
+.approved-box {
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(76, 217, 145, 0.08);
+  border: 1px solid rgba(76, 217, 145, 0.2);
+}
+
+.error-message {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(255, 80, 80, 0.08);
+  border: 1px solid rgba(255, 80, 80, 0.2);
+}
+
+@media (max-width: 700px) {
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .result-heading {
+    flex-direction: column;
+  }
+}
