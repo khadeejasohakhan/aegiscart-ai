@@ -135,7 +135,25 @@ def home():
         )
     }
 
+@app.get("/transactions/{transaction_id}/receipt")
+def get_transaction_receipt(transaction_id: str):
+    transaction = TRANSACTIONS.get(transaction_id)
 
+    if not transaction:
+        raise HTTPException(
+            status_code=404,
+            detail="Transaction not found."
+        )
+
+    receipt = generate_decision_receipt(
+        transaction
+    )
+
+    return {
+        "success": True,
+        "transaction_id": transaction_id,
+        "receipt": receipt
+    }
 # ---------------------------------------------------------
 # Health Check
 # ---------------------------------------------------------
