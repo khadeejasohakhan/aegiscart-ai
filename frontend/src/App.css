@@ -359,3 +359,150 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================================
+   Agent Decision Receipt
+   ========================================================= */
+
+.receipt-button {
+  margin-top: 18px;
+}
+
+.receipt-box {
+  margin-top: 24px;
+  padding: 24px;
+
+  border: 1px solid rgba(109, 93, 252, 0.28);
+  border-radius: 18px;
+
+  background: rgba(109, 93, 252, 0.05);
+}
+
+.receipt-title {
+  margin-bottom: 22px;
+}
+
+.receipt-title h3 {
+  margin: 4px 0 8px;
+  font-size: 22px;
+}
+
+.receipt-title > span {
+  display: inline-block;
+
+  padding: 5px 10px;
+
+  border-radius: 999px;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  letter-spacing: 0.05em;
+
+  background: rgba(80, 220, 140, 0.12);
+}
+
+.receipt-summary {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 12px;
+
+  margin-bottom: 26px;
+}
+
+.receipt-summary div {
+  display: flex;
+  flex-direction: column;
+
+  gap: 5px;
+
+  padding: 13px;
+
+  border-radius: 12px;
+
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.receipt-summary small {
+  opacity: 0.6;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline-event {
+  position: relative;
+
+  display: flex;
+
+  gap: 14px;
+
+  padding-bottom: 20px;
+}
+
+.timeline-event:not(:last-child)::before {
+  content: "";
+
+  position: absolute;
+
+  left: 13px;
+  top: 28px;
+  bottom: 0;
+
+  width: 1px;
+
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.timeline-marker {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 0 0 28px;
+
+  width: 28px;
+  height: 28px;
+
+  border-radius: 50%;
+
+  background: rgba(80, 220, 140, 0.15);
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.timeline-content {
+  padding-top: 3px;
+}
+
+.timeline-content strong {
+  display: block;
+
+  font-size: 13px;
+
+  letter-spacing: 0.04em;
+}
+
+.timeline-content p {
+  margin: 5px 0 0;
+
+  font-size: 13px;
+  line-height: 1.5;
+
+  opacity: 0.72;
+}
+
+@media (max-width: 600px) {
+  .receipt-summary {
+    grid-template-columns: 1fr;
+  }
+}

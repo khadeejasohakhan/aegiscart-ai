@@ -46,6 +46,12 @@ function App() {
   const [paymentMessage, setPaymentMessage] =
     useState("");
 
+  const [liveReceipt, setLiveReceipt] =
+    useState(null);
+
+  const [receiptLoading, setReceiptLoading] =
+    useState(false);
+
 
   // -------------------------------------------------------
   // Start Agentic Checkout
@@ -509,7 +515,50 @@ function App() {
     }
   };
 
+// -------------------------------------------------------
+// Load Live Agent Decision Receipt
+// -------------------------------------------------------
 
+const handleReceipt = async () => {
+  if (!result?.transaction_id) {
+    setError("Transaction ID is missing.");
+    return;
+  }
+
+  setReceiptLoading(true);
+  setError("");
+
+  try {
+    const response = await fetch(
+      `${API_URL}/transactions/${result.transaction_id}/receipt`
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(
+        data.detail ||
+        "Could not load the decision receipt."
+      );
+    }
+
+    setLiveReceipt(data.receipt);
+
+  } catch (err) {
+    console.error(
+      "Receipt error:",
+      err
+    );
+
+    setError(
+      err.message ||
+      "Could not load the decision receipt."
+    );
+
+  } finally {
+    setReceiptLoading(false);
+  }
+};
   // -------------------------------------------------------
   // Convenient Variables
   // -------------------------------------------------------
@@ -927,6 +976,117 @@ function App() {
 
                   </div>
                 )}
+
+                {/* Agent Decision Receipt Button */}
+
+{transaction.status ===
+  "PAYMENT_VERIFIED" && (
+
+  <button
+    className="receipt-button"
+    onClick={handleReceipt}
+    disabled={receiptLoading}
+  >
+
+    {receiptLoading
+      ? "Building Decision Receipt..."
+      : "View Agent Decision Receipt"}
+
+  </button>
+)}
+
+
+{/* Live Agent Decision Receipt */}
+
+{liveReceipt && (
+
+  <div className="receipt-box">
+
+    <div className="receipt-title">
+
+      <p className="eyebrow">
+        EXPLAINABLE COMMERCE
+      </p>
+
+      <h3>
+        Agent Decision Receipt
+      </h3>
+
+      <span>
+        {liveReceipt.transaction_status}
+      </span>
+
+    </div>
+
+
+    <div className="receipt-summary">
+
+      <div>
+        <small>Merchant</small>
+
+        <strong>
+          {liveReceipt.merchant || "—"}
+        </strong>
+      </div>
+
+
+      <div>
+        <small>Selected Product</small>
+
+        <strong>
+          {liveReceipt.selected_product?.name || "—"}
+        </strong>
+      </div>
+
+
+      <div>
+        <small>Authorized Amount</small>
+
+        <strong>
+          ₹{liveReceipt.selected_product?.price || 0}
+        </strong>
+      </div>
+
+    </div>
+
+
+    <div className="timeline">
+
+      {liveReceipt.decision_timeline?.map(
+        (event, index) => (
+
+          <div
+            className="timeline-event"
+            key={`${event.event}-${index}`}
+          >
+
+            <div className="timeline-marker">
+              ✓
+            </div>
+
+            <div className="timeline-content">
+
+              <strong>
+                {event.event?.replaceAll(
+                  "_",
+                  " "
+                )}
+              </strong>
+
+              <p>
+                {event.message}
+              </p>
+
+            </div>
+
+          </div>
+        )
+      )}
+
+    </div>
+
+  </div>
+)}
 
 
               {/* No Matching Product */}
