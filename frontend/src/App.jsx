@@ -3,6 +3,7 @@ import "./App.css";
 
 const API_URL = "http://127.0.0.1:8000";
 
+
 // ---------------------------------------------------------
 // Load Razorpay Checkout Script
 // ---------------------------------------------------------
@@ -41,6 +42,7 @@ function App() {
   const [paying, setPaying] = useState(false);
 
   const [error, setError] = useState("");
+
   const [paymentMessage, setPaymentMessage] =
     useState("");
 
@@ -54,6 +56,7 @@ function App() {
       setError(
         "Please enter a shopping request first."
       );
+
       return;
     }
 
@@ -85,7 +88,9 @@ function App() {
         data
       );
 
+
       // HTTP failure
+
       if (!response.ok) {
         throw new Error(
           data.detail ||
@@ -93,7 +98,9 @@ function App() {
         );
       }
 
+
       // Buyer agent / backend workflow failure
+
       if (!data.success) {
         throw new Error(
           data.error ||
@@ -102,8 +109,11 @@ function App() {
         );
       }
 
+
       // Successful transaction
+
       setResult(data);
+
     } catch (err) {
       console.error(
         "Checkout error:",
@@ -114,6 +124,7 @@ function App() {
         err.message ||
           "AegisCart could not process this request."
       );
+
     } finally {
       setLoading(false);
     }
@@ -129,6 +140,7 @@ function App() {
       setError(
         "Transaction ID is missing."
       );
+
       return;
     }
 
@@ -181,6 +193,7 @@ function App() {
         transaction:
           data.transaction,
       }));
+
     } catch (err) {
       console.error(
         "Approval error:",
@@ -191,6 +204,7 @@ function App() {
         err.message ||
           "Human approval failed."
       );
+
     } finally {
       setApproving(false);
     }
@@ -206,6 +220,7 @@ function App() {
       setError(
         "Transaction ID is missing."
       );
+
       return;
     }
 
@@ -214,6 +229,7 @@ function App() {
     setPaymentMessage("");
 
     try {
+
       // ---------------------------------------------------
       // 1. Load Razorpay Checkout
       // ---------------------------------------------------
@@ -309,6 +325,7 @@ function App() {
       if (orderData.transaction) {
         setResult((previous) => ({
           ...previous,
+
           transaction:
             orderData.transaction,
         }));
@@ -409,6 +426,7 @@ function App() {
             setPaymentMessage(
               "✓ Razorpay payment signature verified securely."
             );
+
           } catch (err) {
             console.error(
               "Verification error:",
@@ -473,8 +491,8 @@ function App() {
         }
       );
 
-
       razorpay.open();
+
     } catch (err) {
       console.error(
         "Payment error:",
@@ -485,6 +503,7 @@ function App() {
         err.message ||
           "Unable to start Razorpay payment."
       );
+
     } finally {
       setPaying(false);
     }
@@ -503,6 +522,9 @@ function App() {
 
   const policy =
     transaction?.policy_decision;
+
+  const upsell =
+    transaction?.upsell_decision;
 
 
   // -------------------------------------------------------
@@ -535,11 +557,14 @@ function App() {
 
         <div className="request-card">
 
-          <label>
+          <label htmlFor="shopping-request">
             What should your AI buyer find?
           </label>
 
           <textarea
+            id="shopping-request"
+            name="shopping-request"
+
             value={request}
 
             onChange={(event) =>
@@ -567,6 +592,7 @@ function App() {
 
         {error && (
           <div className="error-message">
+
             <strong>
               AegisCart could not continue
             </strong>
@@ -574,6 +600,7 @@ function App() {
             <p>
               {error}
             </p>
+
           </div>
         )}
 
@@ -591,11 +618,13 @@ function App() {
 
         {result?.success &&
           transaction && (
+
             <div className="result-card">
 
               <div className="result-heading">
 
                 <div>
+
                   <p className="eyebrow">
                     AGENT DECISION
                   </p>
@@ -604,7 +633,9 @@ function App() {
                     {product?.name ||
                       "No matching product"}
                   </h2>
+
                 </div>
+
 
                 <span className="status-badge">
                   {transaction.status}
@@ -616,9 +647,11 @@ function App() {
               {/* Product Details */}
 
               {product && (
+
                 <div className="product-grid">
 
                   <div>
+
                     <span>
                       Price
                     </span>
@@ -626,10 +659,12 @@ function App() {
                     <strong>
                       ₹{product.price}
                     </strong>
+
                   </div>
 
 
                   <div>
+
                     <span>
                       Quality
                     </span>
@@ -637,10 +672,12 @@ function App() {
                     <strong>
                       {product.quality}
                     </strong>
+
                   </div>
 
 
                   <div>
+
                     <span>
                       Delivery
                     </span>
@@ -648,19 +685,132 @@ function App() {
                     <strong>
                       {product.delivery_days} days
                     </strong>
+
                   </div>
 
 
                   <div>
+
                     <span>
                       Agent score
                     </span>
 
                     <strong>
-                      {product.score ??
-                        "—"}
+                      {product.score ?? "—"}
                     </strong>
+
                   </div>
+
+                </div>
+              )}
+
+
+              {/* Merchant Upsell Protection */}
+
+              {upsell && (
+
+                <div className="upsell-box">
+
+                  <div className="upsell-header">
+
+                    <span className="shield-icon">
+                      🛡️
+                    </span>
+
+                    <div>
+
+                      <strong>
+                        Merchant Upsell{" "}
+                        {upsell.decision === "BLOCK"
+                          ? "Blocked"
+                          : "Evaluated"}
+                      </strong>
+
+                      <p>
+                        AegisCart checked this
+                        merchant offer against your
+                        Purchase Constitution.
+                      </p>
+
+                    </div>
+
+                  </div>
+
+
+                  <div className="upsell-details">
+
+                    <div>
+
+                      <span>
+                        Merchant suggested
+                      </span>
+
+                      <strong>
+                        {upsell.name}
+                      </strong>
+
+                    </div>
+
+
+                    <div>
+
+                      <span>
+                        Upsell price
+                      </span>
+
+                      <strong>
+                        ₹{upsell.price}
+                      </strong>
+
+                    </div>
+
+
+                    <div>
+
+                      <span>
+                        Purchase increase
+                      </span>
+
+                      <strong>
+                        {typeof upsell.percentage ===
+                        "number"
+                          ? `${upsell.percentage.toFixed(
+                              1
+                            )}%`
+                          : `${upsell.percentage}%`}
+                      </strong>
+
+                    </div>
+
+
+                    <div>
+
+                      <span>
+                        Decision
+                      </span>
+
+                      <strong>
+                        {upsell.decision}
+                      </strong>
+
+                    </div>
+
+                  </div>
+
+
+                  <p className="upsell-reason">
+                    {upsell.reason}
+                  </p>
+
+
+                  {upsell.decision === "BLOCK" && (
+
+                    <div className="upsell-protection-message">
+                      ✓ This item was not added to
+                      the Razorpay payment amount.
+                    </div>
+
+                  )}
 
                 </div>
               )}
@@ -669,6 +819,7 @@ function App() {
               {/* Purchase Constitution */}
 
               {policy && (
+
                 <div className="policy-box">
 
                   <strong>
@@ -688,6 +839,7 @@ function App() {
               {transaction.status ===
                 "AWAITING_HUMAN_APPROVAL" &&
                 product && (
+
                   <button
                     className="approval-button"
 
@@ -699,9 +851,11 @@ function App() {
                       approving
                     }
                   >
+
                     {approving
                       ? "Approving..."
                       : `Approve ₹${product.price} Purchase`}
+
                   </button>
                 )}
 
@@ -711,7 +865,9 @@ function App() {
               {transaction.status ===
                 "READY_FOR_PAYMENT" &&
                 product && (
+
                   <>
+
                     <div className="approved-box">
                       ✓ Human approval recorded.
                       Transaction is ready for
@@ -727,10 +883,13 @@ function App() {
                         paying
                       }
                     >
+
                       {paying
                         ? "Preparing secure checkout..."
                         : `Pay ₹${product.price} with Razorpay`}
+
                     </button>
+
                   </>
                 )}
 
@@ -739,6 +898,7 @@ function App() {
 
               {transaction.status ===
                 "PAYMENT_PENDING" && (
+
                   <div className="policy-box">
 
                     <strong>
@@ -759,6 +919,7 @@ function App() {
 
               {transaction.status ===
                 "PAYMENT_VERIFIED" && (
+
                   <div className="approved-box">
 
                     ✓ Razorpay payment signature
@@ -772,6 +933,7 @@ function App() {
 
               {transaction.status ===
                 "NO_MATCH" && (
+
                   <div className="policy-box">
 
                     <strong>

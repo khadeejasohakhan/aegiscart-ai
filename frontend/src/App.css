@@ -234,3 +234,128 @@ button:disabled {
     flex-direction: column;
   }
 }
+
+/* =========================================================
+   Merchant Upsell Protection
+   ========================================================= */
+
+.upsell-box {
+  margin-top: 24px;
+  padding: 22px;
+
+  border: 1px solid rgba(255, 90, 90, 0.32);
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 80, 80, 0.08),
+      rgba(255, 80, 80, 0.03)
+    );
+}
+
+.upsell-header {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 14px;
+
+  margin-bottom: 20px;
+}
+
+.shield-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.upsell-header strong {
+  display: block;
+
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.upsell-header p {
+  margin-top: 6px;
+  margin-bottom: 0;
+
+  font-size: 14px;
+  line-height: 1.5;
+
+  opacity: 0.75;
+}
+
+.upsell-details {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 14px;
+}
+
+.upsell-details div {
+  display: flex;
+  flex-direction: column;
+
+  gap: 5px;
+
+  padding: 12px;
+
+  border-radius: 12px;
+
+  background:
+    rgba(255, 255, 255, 0.04);
+}
+
+.upsell-details span {
+  font-size: 11px;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.06em;
+
+  opacity: 0.6;
+}
+
+.upsell-details strong {
+  font-size: 15px;
+}
+
+.upsell-reason {
+  margin-top: 18px;
+  margin-bottom: 0;
+
+  padding-top: 16px;
+
+  border-top:
+    1px solid rgba(255, 255, 255, 0.1);
+
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.upsell-protection-message {
+  margin-top: 14px;
+
+  padding: 12px 14px;
+
+  border-radius: 10px;
+
+  background:
+    rgba(80, 220, 140, 0.08);
+
+  font-size: 13px;
+  line-height: 1.5;
+
+  font-weight: 600;
+}
+
+
+/* Mobile */
+
+@media (max-width: 600px) {
+  .upsell-details {
+    grid-template-columns: 1fr;
+  }
+}
