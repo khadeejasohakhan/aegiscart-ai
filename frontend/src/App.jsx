@@ -566,6 +566,9 @@ const handleReceipt = async () => {
   const transaction =
     result?.transaction;
 
+  const mission =
+    result?.mission;
+
   const product =
     transaction?.selected_product;
 
@@ -691,7 +694,41 @@ const handleReceipt = async () => {
                 </span>
 
               </div>
+              
+              {/* AI Interpretation Source */}
+              
+              {mission?.interpretation_source && ( <div
+    className={`ai-source-box ${
+      mission.interpretation_source === "GEMINI"
+        ? "ai-source-live"
+        : "ai-source-fallback"
+    }`}
+  >
 
+    <div className="ai-source-icon">
+      {mission.interpretation_source === "GEMINI"
+        ? "✦"
+        : "🛡️"}
+    </div>
+
+    <div>
+
+      <strong>
+        {mission.interpretation_source === "GEMINI"
+          ? "Gemini Buyer Agent Active"
+          : "Safe AI Fallback Active"}
+      </strong>
+
+      <p>
+        {mission.interpretation_source === "GEMINI"
+          ? "Your shopping request was interpreted by the Gemini buyer agent."
+          : "The external AI service was unavailable, so AegisCart safely interpreted the request locally without bypassing any spending or payment rules."}
+      </p>
+
+    </div>
+
+  </div>
+)}
 
               {/* Product Details */}
 

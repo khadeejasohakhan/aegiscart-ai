@@ -1,3 +1,7 @@
+/* =========================================================
+   GLOBAL
+   ========================================================= */
+
 * {
   box-sizing: border-box;
 }
@@ -6,9 +10,15 @@ body {
   margin: 0;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
+
   background:
-    radial-gradient(circle at top, rgba(88, 80, 236, 0.18), transparent 30%),
+    radial-gradient(
+      circle at top,
+      rgba(88, 80, 236, 0.18),
+      transparent 30%
+    ),
     #0b0d12;
+
   color: #f5f7fb;
 }
 
@@ -27,16 +37,24 @@ textarea {
   margin: 0 auto;
 }
 
+
+/* =========================================================
+   TYPOGRAPHY
+   ========================================================= */
+
 .eyebrow {
   margin: 0 0 10px;
+
   font-size: 0.78rem;
   letter-spacing: 0.18em;
   font-weight: 700;
+
   opacity: 0.65;
 }
 
 h1 {
   margin: 0;
+
   font-size: clamp(3rem, 9vw, 6rem);
   line-height: 0.95;
   letter-spacing: -0.055em;
@@ -44,66 +62,115 @@ h1 {
 
 .tagline {
   margin: 18px 0 0;
+
   font-size: clamp(1.15rem, 3vw, 1.7rem);
   font-weight: 600;
 }
 
 .description {
   max-width: 700px;
+
   margin: 16px 0 36px;
+
   line-height: 1.7;
+
   color: #aab1c0;
 }
+
+
+/* =========================================================
+   MAIN CARDS
+   ========================================================= */
 
 .request-card,
 .result-card {
   border: 1px solid rgba(255, 255, 255, 0.09);
+
   background: rgba(18, 21, 29, 0.82);
+
   backdrop-filter: blur(14px);
+
   border-radius: 22px;
+
   padding: 24px;
+
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.25);
 }
 
 .request-card label {
   display: block;
+
   margin-bottom: 12px;
+
   font-weight: 700;
 }
+
+
+/* =========================================================
+   SHOPPING REQUEST
+   ========================================================= */
 
 textarea {
   width: 100%;
   min-height: 150px;
+
   resize: vertical;
+
   padding: 18px;
+
   border-radius: 16px;
+
   border: 1px solid rgba(255, 255, 255, 0.1);
+
   outline: none;
+
   background: #0d1016;
   color: white;
+
   line-height: 1.6;
+
   transition: 0.2s ease;
 }
 
 textarea:focus {
   border-color: rgba(130, 118, 255, 0.9);
-  box-shadow: 0 0 0 4px rgba(130, 118, 255, 0.12);
+
+  box-shadow:
+    0 0 0 4px rgba(130, 118, 255, 0.12);
 }
 
 textarea::placeholder {
   color: #656c7d;
 }
 
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
 button {
-  margin-top: 16px;
   width: 100%;
+
+  margin-top: 16px;
+
+  padding: 15px 18px;
+
   border: 0;
   border-radius: 14px;
-  padding: 15px 18px;
+
   cursor: pointer;
+
   font-weight: 800;
+
   color: white;
-  background: linear-gradient(135deg, #6d5dfc, #8a64ff);
+
+  background:
+    linear-gradient(
+      135deg,
+      #6d5dfc,
+      #8a64ff
+    );
+
   transition:
     transform 0.2s ease,
     opacity 0.2s ease;
@@ -115,8 +182,14 @@ button:hover:not(:disabled) {
 
 button:disabled {
   cursor: wait;
+
   opacity: 0.65;
 }
+
+
+/* =========================================================
+   RESULT CARD
+   ========================================================= */
 
 .result-card {
   margin-top: 24px;
@@ -129,6 +202,7 @@ button:disabled {
 
 .result-card p {
   margin: 10px 0;
+
   color: #c5cad5;
 }
 
@@ -136,23 +210,15 @@ button:disabled {
   color: #ffffff;
 }
 
-@media (max-width: 600px) {
-  .app {
-    padding: 32px 16px;
-  }
-
-  .request-card,
-  .result-card {
-    padding: 18px;
-    border-radius: 18px;
-  }
-}
-
 .result-heading {
   display: flex;
+
   justify-content: space-between;
+
   gap: 20px;
+
   align-items: flex-start;
+
   margin-bottom: 24px;
 }
 
@@ -162,31 +228,112 @@ button:disabled {
 
 .status-badge {
   padding: 8px 12px;
+
   border-radius: 999px;
+
   background: rgba(138, 100, 255, 0.12);
-  border: 1px solid rgba(138, 100, 255, 0.35);
+
+  border:
+    1px solid rgba(138, 100, 255, 0.35);
+
   font-size: 0.75rem;
+
   font-weight: 800;
 }
 
+
+/* =========================================================
+   AI INTERPRETATION SOURCE
+   ========================================================= */
+
+.ai-source-box {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 12px;
+
+  margin: 18px 0 22px;
+
+  padding: 15px 16px;
+
+  border-radius: 14px;
+}
+
+.ai-source-live {
+  border:
+    1px solid rgba(109, 93, 252, 0.28);
+
+  background:
+    rgba(109, 93, 252, 0.06);
+}
+
+.ai-source-fallback {
+  border:
+    1px solid rgba(245, 180, 70, 0.32);
+
+  background:
+    rgba(245, 180, 70, 0.07);
+}
+
+.ai-source-icon {
+  flex-shrink: 0;
+
+  font-size: 20px;
+
+  line-height: 1;
+}
+
+.ai-source-box strong {
+  display: block;
+
+  margin-bottom: 4px;
+}
+
+.ai-source-box p {
+  margin: 0;
+
+  font-size: 13px;
+
+  line-height: 1.5;
+
+  opacity: 0.72;
+}
+
+
+/* =========================================================
+   PRODUCT DETAILS
+   ========================================================= */
+
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+
+  grid-template-columns:
+    repeat(4, 1fr);
+
   gap: 12px;
+
   margin-bottom: 20px;
 }
 
 .product-grid div {
   padding: 16px;
+
   background: #0d1016;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+
+  border:
+    1px solid rgba(255, 255, 255, 0.07);
+
   border-radius: 14px;
 }
 
 .product-grid span {
   display: block;
+
   margin-bottom: 6px;
+
   color: #777f91;
+
   font-size: 0.8rem;
 }
 
@@ -194,16 +341,31 @@ button:disabled {
   font-size: 1rem;
 }
 
+
+/* =========================================================
+   PURCHASE CONSTITUTION
+   ========================================================= */
+
 .policy-box {
   padding: 18px;
+
   border-radius: 14px;
-  background: rgba(255, 183, 77, 0.08);
-  border: 1px solid rgba(255, 183, 77, 0.2);
+
+  background:
+    rgba(255, 183, 77, 0.08);
+
+  border:
+    1px solid rgba(255, 183, 77, 0.2);
 }
 
 .policy-box p {
   margin-bottom: 0;
 }
+
+
+/* =========================================================
+   APPROVAL
+   ========================================================= */
 
 .approval-button {
   margin-top: 18px;
@@ -211,39 +373,50 @@ button:disabled {
 
 .approved-box {
   margin-top: 18px;
+
   padding: 16px;
+
   border-radius: 14px;
-  background: rgba(76, 217, 145, 0.08);
-  border: 1px solid rgba(76, 217, 145, 0.2);
+
+  background:
+    rgba(76, 217, 145, 0.08);
+
+  border:
+    1px solid rgba(76, 217, 145, 0.2);
 }
+
+
+/* =========================================================
+   ERRORS
+   ========================================================= */
 
 .error-message {
   margin-top: 20px;
+
   padding: 16px;
+
   border-radius: 14px;
-  background: rgba(255, 80, 80, 0.08);
-  border: 1px solid rgba(255, 80, 80, 0.2);
+
+  background:
+    rgba(255, 80, 80, 0.08);
+
+  border:
+    1px solid rgba(255, 80, 80, 0.2);
 }
 
-@media (max-width: 700px) {
-  .product-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .result-heading {
-    flex-direction: column;
-  }
-}
 
 /* =========================================================
-   Merchant Upsell Protection
+   MERCHANT UPSELL PROTECTION
    ========================================================= */
 
 .upsell-box {
   margin-top: 24px;
+
   padding: 22px;
 
-  border: 1px solid rgba(255, 90, 90, 0.32);
+  border:
+    1px solid rgba(255, 90, 90, 0.32);
+
   border-radius: 18px;
 
   background:
@@ -256,6 +429,7 @@ button:disabled {
 
 .upsell-header {
   display: flex;
+
   align-items: flex-start;
 
   gap: 14px;
@@ -265,6 +439,7 @@ button:disabled {
 
 .shield-icon {
   font-size: 28px;
+
   line-height: 1;
 }
 
@@ -272,6 +447,7 @@ button:disabled {
   display: block;
 
   font-size: 17px;
+
   font-weight: 700;
 }
 
@@ -280,6 +456,7 @@ button:disabled {
   margin-bottom: 0;
 
   font-size: 14px;
+
   line-height: 1.5;
 
   opacity: 0.75;
@@ -296,6 +473,7 @@ button:disabled {
 
 .upsell-details div {
   display: flex;
+
   flex-direction: column;
 
   gap: 5px;
@@ -332,6 +510,7 @@ button:disabled {
     1px solid rgba(255, 255, 255, 0.1);
 
   font-size: 14px;
+
   line-height: 1.55;
 }
 
@@ -346,22 +525,15 @@ button:disabled {
     rgba(80, 220, 140, 0.08);
 
   font-size: 13px;
+
   line-height: 1.5;
 
   font-weight: 600;
 }
 
 
-/* Mobile */
-
-@media (max-width: 600px) {
-  .upsell-details {
-    grid-template-columns: 1fr;
-  }
-}
-
 /* =========================================================
-   Agent Decision Receipt
+   AGENT DECISION RECEIPT
    ========================================================= */
 
 .receipt-button {
@@ -370,12 +542,16 @@ button:disabled {
 
 .receipt-box {
   margin-top: 24px;
+
   padding: 24px;
 
-  border: 1px solid rgba(109, 93, 252, 0.28);
+  border:
+    1px solid rgba(109, 93, 252, 0.28);
+
   border-radius: 18px;
 
-  background: rgba(109, 93, 252, 0.05);
+  background:
+    rgba(109, 93, 252, 0.05);
 }
 
 .receipt-title {
@@ -384,6 +560,7 @@ button:disabled {
 
 .receipt-title h3 {
   margin: 4px 0 8px;
+
   font-size: 22px;
 }
 
@@ -395,11 +572,13 @@ button:disabled {
   border-radius: 999px;
 
   font-size: 11px;
+
   font-weight: 700;
 
   letter-spacing: 0.05em;
 
-  background: rgba(80, 220, 140, 0.12);
+  background:
+    rgba(80, 220, 140, 0.12);
 }
 
 .receipt-summary {
@@ -415,6 +594,7 @@ button:disabled {
 
 .receipt-summary div {
   display: flex;
+
   flex-direction: column;
 
   gap: 5px;
@@ -423,15 +603,22 @@ button:disabled {
 
   border-radius: 12px;
 
-  background: rgba(255, 255, 255, 0.04);
+  background:
+    rgba(255, 255, 255, 0.04);
 }
 
 .receipt-summary small {
   opacity: 0.6;
 }
 
+
+/* =========================================================
+   DECISION TIMELINE
+   ========================================================= */
+
 .timeline {
   display: flex;
+
   flex-direction: column;
 }
 
@@ -451,32 +638,41 @@ button:disabled {
   position: absolute;
 
   left: 13px;
+
   top: 28px;
+
   bottom: 0;
 
   width: 1px;
 
-  background: rgba(255, 255, 255, 0.15);
+  background:
+    rgba(255, 255, 255, 0.15);
 }
 
 .timeline-marker {
   position: relative;
+
   z-index: 1;
 
   display: flex;
+
   align-items: center;
+
   justify-content: center;
 
   flex: 0 0 28px;
 
   width: 28px;
+
   height: 28px;
 
   border-radius: 50%;
 
-  background: rgba(80, 220, 140, 0.15);
+  background:
+    rgba(80, 220, 140, 0.15);
 
   font-size: 13px;
+
   font-weight: 700;
 }
 
@@ -496,13 +692,56 @@ button:disabled {
   margin: 5px 0 0;
 
   font-size: 13px;
+
   line-height: 1.5;
 
   opacity: 0.72;
 }
 
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+  .product-grid {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+  .result-heading {
+    flex-direction: column;
+  }
+}
+
+
 @media (max-width: 600px) {
+
+  .app {
+    padding: 32px 16px;
+  }
+
+  .request-card,
+  .result-card {
+    padding: 18px;
+
+    border-radius: 18px;
+  }
+
+  .upsell-details {
+    grid-template-columns: 1fr;
+  }
+
   .receipt-summary {
     grid-template-columns: 1fr;
+  }
+
+  .ai-source-box {
+    padding: 14px;
+  }
+
+  .ai-source-icon {
+    font-size: 18px;
   }
 }
