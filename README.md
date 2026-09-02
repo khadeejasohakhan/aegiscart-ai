@@ -291,7 +291,7 @@ The following screenshots demonstrate AegisCart's complete agentic-commerce flow
 
 The user begins by describing what they want to purchase in natural language.
 
-![AegisCart Home](docs/images/aegiscart-home.png)
+![AegisCart Home](docs/aegiscart-home.png)
 
 ---
 
@@ -299,7 +299,7 @@ The user begins by describing what they want to purchase in natural language.
 
 Instead of manually applying filters, the user gives the AI buyer a shopping mission containing budget, delivery, quality, color, and preference constraints.
 
-![AegisCart Shopping Prompt](docs/images/aegiscart-prompt.png)
+![AegisCart Shopping Prompt](docs/aegiscart-prompt.png)
 
 ---
 
@@ -307,7 +307,7 @@ Instead of manually applying filters, the user gives the AI buyer a shopping mis
 
 The Buyer Agent interprets the request, evaluates the agent-readable merchant catalog, filters products that violate hard constraints, and selects the best valid option.
 
-![Agent Decision](docs/images/agent-decision.png)
+![Agent Decision](docs/agent-decision.png)
 
 AegisCart also exposes whether the request was interpreted by the Gemini Buyer Agent or by the safe local fallback.
 
@@ -323,7 +323,7 @@ In the demo, a **₹699 Premium Hijab** represents approximately **19.4%** of th
 
 Because the user's maximum permitted upsell is **10%**, AegisCart blocks it.
 
-![Merchant Upsell Blocked](docs/images/upsell-block.png)
+![Merchant Upsell Blocked](docs/upsell-block.png)
 
 The blocked item is not added to the Razorpay order amount.
 
@@ -341,7 +341,7 @@ Purchases are handled according to three boundaries:
 
 This demonstrates that AI recommendations and financial authorization remain separate.
 
-![Purchase Constitution Protection](docs/images/purchase-block.png)
+![Purchase Constitution Protection](docs/purchase-block.png)
 
 ---
 
@@ -351,7 +351,7 @@ The selected **Midnight Abaya costs ₹3,599**, which exceeds the ₹1,000 auton
 
 AegisCart therefore pauses the transaction and requires explicit human approval before payment can begin.
 
-![Human Approval Gate](docs/images/human-approval.png)
+![Human Approval Gate](docs/human-approval.png)
 
 ---
 
@@ -361,7 +361,7 @@ Protected financial actions remain under human control.
 
 The transaction cannot proceed to payment until the required approval has been provided.
 
-![Human Confirmation](docs/images/yes%20or%20no.png)
+![Human Confirmation](docs/yes%20or%20no.png)
 
 ---
 
@@ -371,7 +371,7 @@ Only after the transaction satisfies the Purchase Constitution and receives the 
 
 The prototype uses **Razorpay Test Mode**, so no real money is transferred.
 
-![Razorpay Netbanking Options](docs/images/netbanking%20options.png)
+![Razorpay Netbanking Options](docs/netbanking%20options.png)
 
 ---
 
@@ -381,7 +381,7 @@ The authorized amount is passed to Razorpay's test checkout.
 
 The merchant upsell that was blocked earlier is excluded from the payment amount.
 
-![Payment Processing](docs/images/processing.png)
+![Payment Processing](docs/processing.png)
 
 ---
 
@@ -389,7 +389,7 @@ The merchant upsell that was blocked earlier is excluded from the payment amount
 
 The Razorpay Test Mode transaction completes through the simulated payment flow.
 
-![Razorpay Test Success](docs/images/success.png)
+![Razorpay Test Success](docs/success.png)
 
 AegisCart then performs **server-side Razorpay signature verification** before marking the transaction as `PAYMENT_VERIFIED`.
 
@@ -413,7 +413,7 @@ The receipt records:
 - Payment verification
 - Transaction state changes
 
-![Agent Decision Receipt](docs/images/decision-receipt.png)
+![Agent Decision Receipt](docs/decision-receipt.png)
 
 This makes the agent's financial behavior **explainable, bounded, and auditable** rather than functioning as an opaque AI checkout.
 
